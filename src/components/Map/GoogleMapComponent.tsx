@@ -1,9 +1,136 @@
-import React from 'react'
+"use client"
+import React, { useState, useEffect } from 'react';
+import { GoogleMap, LoadScript, DirectionsService, DirectionsRenderer, Marker } from '@react-google-maps/api';
+import MarkerBus from "../../../public/images/busmarker.png"
 
-export default function GoogleMapComponent() {
-  return (
-    <div>
-      This component is tasked to render the google Map
-    </div>
-  )
+interface Coordinate {
+  name: string;
+  lat: number;
+  lng: number;
 }
+
+interface BusMapProps {
+  waypoints: Coordinate[];
+  busSpeed: number; // Speed in meters per second
+}
+
+const mapContainerStyle = {
+  width: '100%',
+  height: '100vh',
+};
+
+const GoogleMapComponent: React.FC<BusMapProps> = ({ waypoints, busSpeed }) => {
+  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
+  const [error, setError] = useState<string | null | any>(null);
+  const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [busLocation, setBusLocation] = useState<Coordinate | null>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsedTime(prevTime => prevTime + 1); // Increment elapsed time every second
+    }, 1000); // Update elapsed time every second
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const fetchDirections = async () => {
+      try {
+        const directionsService = new window.google.maps.DirectionsService();
+
+        const response = await new Promise<google.maps.DirectionsResult | null>((resolve, reject) => {
+          directionsService.route(
+            {
+              origin: waypoints[0],
+              destination: waypoints[waypoints.length - 1],
+              waypoints: waypoints.slice(1, waypoints.length - 1).map(waypoint => ({
+                location: waypoint,
+                stopover: true,
+              })),
+              travelMode: window.google.maps.TravelMode.DRIVING,
+            },
+            (response, status) => {
+              if (status === window.google.maps.DirectionsStatus.OK) {
+                resolve(response);
+              } else {
+                reject(`Directions request failed: ${status}`);
+              }
+            }
+          );
+        });
+
+        setDirections(response);
+        setError(null);
+      } catch (error) {
+        setDirections(null);
+        setError("Failed to get directions. Please try again later.");
+      }
+    };
+
+    fetchDirections();
+  }, [waypoints]);
+
+  useEffect(() => {
+    if (!directions || !directions.routes || !directions.routes[0]) return;
+
+    const route = directions.routes[0];
+    const path = route.overview_path;
+
+    // Calculate total distance of the route
+    const totalDistance = google.maps.geometry.spherical.computeLength(path);
+
+    // Calculate elapsed distance from the start
+    const elapsedDistance = (elapsedTime * busSpeed) % totalDistance;
+
+    // Find the segment of the route based on elapsed distance
+    let accumulatedDistance = 0;
+    let segmentIndex = 0;
+    for (let i = 1; i < path.length; i++) {
+      const segmentStart = path[i - 1];
+      const segmentEnd = path[i];
+      const segmentDistance = google.maps.geometry.spherical.computeDistanceBetween(segmentStart, segmentEnd);
+      if (accumulatedDistance + segmentDistance >= elapsedDistance) {
+        segmentIndex = i - 1;
+        break;
+      }
+      accumulatedDistance += segmentDistance;
+    }
+
+    // Calculate ratio of progress within the current segment
+    const segmentStart = path[segmentIndex];
+    const segmentEnd = path[segmentIndex + 1];
+    const segmentDistance = google.maps.geometry.spherical.computeDistanceBetween(segmentStart, segmentEnd);
+    const ratio = (elapsedDistance - accumulatedDistance) / segmentDistance;
+
+    // Interpolate bus position within the current segment
+    const lat = segmentStart.lat() + (segmentEnd.lat() - segmentStart.lat()) * ratio;
+    const lng = segmentStart.lng() + (segmentEnd.lng() - segmentStart.lng()) * ratio;
+
+    setBusLocation({ name: '', lat, lng });
+  }, [elapsedTime, directions, busSpeed]);
+  const [center, setCenter] = useState({ lat: -1.939826787816454, lng: 30.0445426438232 });
+  const [zoom, setZoom] = useState(15);
+
+  return (
+    <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY || ""} >
+      <GoogleMap mapContainerStyle={mapContainerStyle} center={center}
+        zoom={zoom}
+        // onCenterChanged={() => setCenter(map.getCenter())}
+        // onZoomChanged={() => setZoom(map.getZoom())}
+        options={{ zoomControl: false, fullscreenControl: false }}>
+        {directions && <DirectionsRenderer directions={directions} />}
+
+        {error && <div>Error: {error}</div>}
+        {busLocation && <Marker icon={{
+          url: `https://cdn1.iconfinder.com/data/icons/map-navigation-elements/512/bus-station-object-map-pointer-512.png`, // Replace with the path to your marker image
+          scaledSize: new window.google.maps.Size(40, 40), // Adjust the anchor point if needed
+        }} position={{ lat: busLocation.lat, lng: busLocation.lng }} />}
+        {/* {waypoints.map((waypoint, index) => (
+          <Marker key={index} position={{ lat: waypoint.lat, lng: waypoint.lng }} label={waypoint.name} />
+        ))} */}
+      </GoogleMap>
+    </LoadScript>
+  );
+}
+
+export default GoogleMapComponent;
