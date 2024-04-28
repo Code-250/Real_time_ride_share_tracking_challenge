@@ -37,16 +37,3 @@ export async function calculateDistanceAndDuration(origin: LatLngLiteral, destin
   const duration = route?.duration?.value !== undefined ? route?.duration?.value / 60 : 0;
   return { distance, duration }
 }
-
-// // Example usage:
-// const currentStop: LatLngLiteral = { lat: 12.345, lng: 67.890 }; // Current stop coordinates
-// const nextStop: LatLngLiteral = { lat: 23.456, lng: 78.901 }; // Next stop coordinates
-
-// calculateDistanceAndDuration(currentStop, nextStop)
-//   .then(result => {
-//     console.log('Distance:', result.distance, 'km');
-//     console.log('Duration:', result.duration, 'minutes');
-//   })
-//   .catch(error => {
-//     console.error('Error:', error);
-//   });

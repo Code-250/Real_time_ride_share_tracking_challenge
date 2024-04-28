@@ -34,7 +34,6 @@ const useFetchDirections = (
 			try {
 				const directionsService =
 					new google.maps.DirectionsService()
-				console.log(directionsService)
 				if (directionsService) {
 					let response =
 						await new Promise<google.maps.DirectionsResult | null>(
@@ -137,18 +136,9 @@ const useFetchDirections = (
 					)
 
 				if (response) {
-					console.log(
-						"got the directions....",
-					)
-
 					setDirections(response)
 					setError(null)
 				} else if (retries > 0) {
-					// Retry the request if the response is null and retries are left
-					console.log(
-						"retrying for directions....",
-					)
-
 					await fetchDirections(
 						retries - 1,
 					)

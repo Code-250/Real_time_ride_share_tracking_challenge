@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Real-time Ride-Share Tracking🥳🚀
 
-## Getting Started
+## Objective
 
-First, run the development server:
+Develop a web page, that utilizes the
+Google Maps API to navigate a route. The
+page should display the estimated time
+to reach each upcoming stop.
+
+## Installation Process
+
+1.  clone the project
+
+```bash
+git clone https://github.com/Code-250/Real_time_ride_share_tracking_challenge.git
+
+```
+
+2.  Install all packages(Dependencies)
+
+```bash
+npm install
+# or
+yarn
+```
+
+3.  run the project locally through npm
+    or yarn according to the package
+    manager that you use
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Approach used
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## steps
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+1. set up the project using nextjs
+   version 14 this was use in order to
+   revelage the benefits that Nextjs
+   comes with such as caching and better
+   performance which allows the user to
+   be able to have data faster.
+2. install @react-google-maps/api which
+   helped in rendering the google map
+   and plotting specified stops
 
-## Learn More
+```bash
+npm install --save @react-google-maps/api
+```
 
-To learn more about Next.js, take a look at the following resources:
+3. through implementing the separation
+   of concerns there are functions that
+   helps to run and calculate Distances
+   between the bus locationa and the
+   nextStop of the bus
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. We have a function called
+   useFetchDirections which is tasked to
+   fetch the directions of the provided
+   locations using google map
+   DirectionsService.
+5. Finally there is a component
+   responsible to showcase the next stop
+   and the distance and time it will
+   take the bus to get to the next stop
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+🚨🚨🚨 : we have assumed that the bus is
+moving at 40km/h as a speed
 
-## Deploy on Vercel
+## Contributors
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+[Richard MUNYEMANA](https://github.com/code-250)

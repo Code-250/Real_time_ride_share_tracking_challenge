@@ -19,18 +19,15 @@ export default function Home() {
 
     return () => clearInterval(interval);
   }, []);
-  // console.log(directions);
-
   const { directions, error } = useFetchDirections(waypoints);
 
   const busLocation = useDistanceCalculation(directions, elapsedTime, busSpeed)
 
   const { distanceToNextStop, timeToNextStop, nextStopInfo } = useBusLocation(busLocation, waypoints, busSpeed);
-  console.log(distanceToNextStop.toFixed(2), "this is the distance to next stop");
   const time = Number(timeToNextStop.toFixed(2)) * 100;
   return (
     <main className="h-[calc(100vh/-/200px)] w-full relative">
-      <Indicator distance={distanceToNextStop} time={time} />
+      <Indicator distance={distanceToNextStop} time={time} nextStop={nextStopInfo} />
       <GoogleMapComponent waypoints={waypoints} busSpeed={busSpeed} directions={directions} error=" there has been an error" busLocation={busLocation} />
     </main>
   );

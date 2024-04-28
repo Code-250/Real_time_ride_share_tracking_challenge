@@ -61,7 +61,6 @@ export const useDistanceCalculation: distanceCalculation =
 						segmentStart,
 						segmentEnd,
 					)
-				// console.log(segmentDistance);
 
 				if (
 					accumulatedDistance +
