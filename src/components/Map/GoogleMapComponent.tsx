@@ -9,6 +9,9 @@ interface Coordinate {
   lng: number;
 }
 
+type CalculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => number;
+type useBusLocation = (busLocation: any, waypoints: any[], busSpeed: number) => any;
+
 interface BusMapProps {
   waypoints: Coordinate[];
   busSpeed: number; // Speed in meters per second
@@ -26,20 +29,74 @@ const GoogleMapComponent: React.FC<BusMapProps> = ({ waypoints, busSpeed }) => {
   const [busLocation, setBusLocation] = useState<Coordinate | null>(null);
   const [currentStop, setCurrentStop] = useState({ name: waypoints[0].name, lat: waypoints[0].lat, lng: waypoints[0].lng });
   const [nextStop, setNextStop] = useState({ name: waypoints[1].name, lat: waypoints[1].lat, lng: waypoints[1].lng });
-  const [distanceToNextStop, setDistanceToNextStop] = useState(0);
-  const [timeToNextStop, setTimeToNextStop] = useState(0);
+  const [nextStopIndex, setNextStopIndex] = useState(1);
+  // const [timeToNextStop, setTimeToNextStop] = useState(0);
   const [currentStopIndex, setCurrentStopIndex] = useState(0);
 
-  useEffect(() => {
-    // Calculate distance and time to next stop
-    calculateDistanceAndDuration(currentStop, nextStop)
-      .then((routeInfo: any) => {
-        console.log(routeInfo.distance, routeInfo.duration, "these are the distance and duration");
-      })
-      .catch(error => {
-        console.error('Error calculating route:', error);
-      });
-  }, [currentStop, nextStop]);
+
+  //  function to calculate the distance 
+
+  const calculateDistance: CalculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1) * (Math.PI / 180)) * Math.cos((lat2) * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in km
+    return distance;
+  }
+
+  const useBusLocation: useBusLocation = (busLocation, waypoints, busSpeed) => {
+    const [currentStopIndex, setCurrentStopIndex] = useState(0);
+    const [distanceToNextStop, setDistanceToNextStop] = useState(0);
+    const [timeToNextStop, setTimeToNextStop] = useState(0);
+    const [nextStopInfo, setNextStopInfo] = useState(null);
+
+    useEffect(() => {
+      if (busLocation && waypoints.length > 1 && currentStopIndex < waypoints.length - 1) {
+        // const currentStop = waypoints[currentStopIndex];
+        const nextStop = waypoints[currentStopIndex + 1];
+
+        const distance = calculateDistance(busLocation.lat, busLocation.lng, nextStop.lat, nextStop.lng);
+        setDistanceToNextStop(distance);
+        setTimeToNextStop(distance / busSpeed);
+
+        // Check if the bus has reached the next stop
+        const distanceToNextStop = calculateDistance(busLocation.lat, busLocation.lng, nextStop.lat, nextStop.lng);
+        setDistanceToNextStop(distanceToNextStop);
+        setTimeToNextStop(distanceToNextStop / busSpeed);
+
+        if (distanceToNextStop < 0.01) { // You can adjust this threshold as needed
+          setCurrentStopIndex(currentStopIndex + 1);
+        }
+
+        // Set next stop info for debugging
+        setNextStopInfo(nextStop);
+      }
+    }, [busLocation, waypoints, busSpeed, currentStopIndex]);
+
+    return { distanceToNextStop, timeToNextStop, nextStopInfo };
+  }
+
+  // finding the distance and time
+
+  const { distanceToNextStop, timeToNextStop } = useBusLocation(busLocation, waypoints, 40);
+  console.log(distanceToNextStop.toFixed(2), (timeToNextStop * 60).toFixed(2), "===>> thse data");
+
+
+  // useEffect(() => {
+  //   // Calculate distance and time to next stop
+  //   calculateDistanceAndDuration(currentStop, nextStop)
+  //     .then((routeInfo: any) => {
+  //       console.log(routeInfo.distance, routeInfo.duration, "these are the distance and duration");
+  //     })
+  //     .catch(error => {
+  //       console.error('Error calculating route:', error);
+  //     });
+  // }, [currentStop, nextStop]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -166,7 +223,7 @@ const GoogleMapComponent: React.FC<BusMapProps> = ({ waypoints, busSpeed }) => {
       const distanceLeftToNextStop = distanceBetweenStops - distanceToClosestStop;
 
       if (distanceLeftToNextStop < 0) {
-        console.log("The bus passed the next stop");
+        // console.log("The bus passed the next stop");
         setCurrentStopIndex(prevIndex => prevIndex + 1);
         setCurrentStop(nextStop);
         setNextStop(waypoints[nextStopIndex + 1]);
@@ -176,7 +233,8 @@ const GoogleMapComponent: React.FC<BusMapProps> = ({ waypoints, busSpeed }) => {
     } else {
       console.log("The bus reached the last stop");
     }
-  }, [busLocation]);
+  }, [busLocation, currentStop.lat, currentStop.lng, currentStopIndex, waypoints]);
+
 
 
 
@@ -196,9 +254,9 @@ const GoogleMapComponent: React.FC<BusMapProps> = ({ waypoints, busSpeed }) => {
           scaledSize: new window.google.maps.Size(40, 40), // Adjust the anchor point if needed
         }} position={{ lat: busLocation.lat, lng: busLocation.lng }} />}
 
-        {/* {waypoints.map((waypoint, index) => (
+        {waypoints.map((waypoint, index) => (
           <Marker key={index} position={{ lat: waypoint.lat, lng: waypoint.lng }} label={waypoint.name} />
-        ))} */}
+        ))}
       </GoogleMap>
     </LoadScript>
   );
