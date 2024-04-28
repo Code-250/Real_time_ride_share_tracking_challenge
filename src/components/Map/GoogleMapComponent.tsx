@@ -29,7 +29,6 @@ const GoogleMapComponent: React.FC<BusMapProps> = ({ waypoints, busSpeed }) => {
   const [busLocation, setBusLocation] = useState<Coordinate | null>(null);
   const [currentStop, setCurrentStop] = useState({ name: waypoints[0].name, lat: waypoints[0].lat, lng: waypoints[0].lng });
   const [nextStop, setNextStop] = useState({ name: waypoints[1].name, lat: waypoints[1].lat, lng: waypoints[1].lng });
-  const [nextStopIndex, setNextStopIndex] = useState(1);
   // const [timeToNextStop, setTimeToNextStop] = useState(0);
   const [currentStopIndex, setCurrentStopIndex] = useState(0);
 
